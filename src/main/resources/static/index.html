@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Webpage Title -->
+    <title>Home | 익명게시판</title>
+
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <!-- Font Awesome CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+
+    <script>
+        let page;
+        $(document).ready(function () {
+            page = 0;
+            get_posts()
+            $('div.body-post-list').addClass('active')
+            $('div.body-post-view').removeClass('active')
+            $('div.body-post-form').removeClass('active')
+        })
+
+        function get_page(p) {
+            page = p - 1;
+            get_posts()
+        }
+
+        function get_posts() {
+            $('#post-table').empty()
+            $('#pagination-ul').empty()
+            $.ajax({
+                type: 'GET',
+                url: `/api/posts?page=${page}&display=10`,
+                success: function (response) {
+                    let nowPage = page + 1;
+                    let totalPage = response['totalPages'] > 0 ? response['totalPages'] : 1;
+
+                    let paginationHtml = '';
+                    if (nowPage > 4) {
+                        paginationHtml = `<li><span class="pagination-ellipsis">&hellip;</span></li>`
+                        $('#pagination-ul').append(paginationHtml);
+                    } else {
+                        for (let i = 1; i < nowPage - 1; i++) {
+                            paginationHtml = `<li><a class="pagination-link" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            $('#pagination-ul').append(paginationHtml);
+                        }
+                    }
+
+                    if (nowPage < totalPage) {
+                        for (let i = nowPage - 1 > 0 ? nowPage - 1 : 1; i <= nowPage + 1; i++) {
+                            if (i === nowPage) {
+                                paginationHtml = `<li><a class="pagination-link is-current" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            } else {
+                                paginationHtml = `<li><a class="pagination-link" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            }
+                            $('#pagination-ul').append(paginationHtml);
+                        }
+                    } else {
+                        for (let i = nowPage - 1 > 0 ? nowPage - 1 : 1; i <= totalPage; i++) {
+                            if (i === nowPage) {
+                                paginationHtml = `<li><a class="pagination-link is-current" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            } else {
+                                paginationHtml = `<li><a class="pagination-link" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            }
+                            $('#pagination-ul').append(paginationHtml);
+                        }
+                    }
+
+                    if (nowPage < totalPage - 4) {
+                        paginationHtml += `<li><span class="pagination-ellipsis">&hellip;</span></li>`
+                        $('#pagination-ul').append(paginationHtml);
+                    } else {
+                        for (let i = nowPage + 2; i <= totalPage; i++) {
+                            paginationHtml = `<li><a class="pagination-link" aria-label="Goto page ${i}" onclick="get_page(${i})">${i}</a></li>`
+                            $('#pagination-ul').append(paginationHtml);
+                        }
+                    }
+                    if (response['empty'] === true)
+                        return;
+                    let posts = response['content']
+
+                    for (let i = 0; i < response['numberOfElements']; i++) {
+                        let tempHtml = `<tr onclick="get_post_one(${posts[i]['id']})">
+                                            <th>${posts[i]['id']}</th>
+                                            <td>${posts[i]['writer']}</td>
+                                            <td>${posts[i]['title']}</td>
+                                            <td>${time2str(posts[i]['createdAt'])}</td>
+                                            <td>${posts[i]['view_count']}</td>
+                                            <td>${posts[i]['comments_count']}</td>
+                                        </tr>`
+                        $('#post-table').append(tempHtml)
+                    }
+                }
+            })
+        }
+
+        function get_post_one(id) {
+            $('#post-box').empty()
+            $.ajax({
+                type: 'GET',
+                url: '/api/posts/' + id,
+                success: function (response) {
+                    $('div.body-post-form').removeClass('active')
+                    $('div.body-post-list').removeClass('active')
+                    $('div.body-post-view').addClass('active')
+                    let title = response['title']
+                    let writer = response['writer']
+                    let createdAt = response['createdAt']
+                    let view_count = response['view_count']
+                    let contents = response['contents']
+                    let tempHtml = `<div class="post-box">
+                                        <div class="edit-button-area">
+                                            <button class="button is-link" onclick="check_post_pwd(${id},'edit')">수정</button>
+                                            <button class="button is-danger" onclick="check_post_pwd(${id},'delete')">삭제</button>
+                                            <button class="button" onclick="post_cancel()">목록</button>
+                                        </div>
+                                        <div class="post-title">
+                                            제목 : <span id="view-title">${title}</span>
+                                        </div>
+                                        <div class="post-writer">
+                                            글쓴이 : <span id="view-writer">${writer}</span>
+                                        </div>
+                                        <div class="post-date">
+                                            작성 날짜 : <span>${date2str(createdAt)}</span>
+                                        </div>
+                                        <div class="post-view-count">
+                                            조회수 : <span>${view_count}</span>
+                                        </div>
+                                        <div class="post-contents" id="view-contents">${contents}</div>
+                                    </div>`
+                    $('#post-box').append(tempHtml)
+                }
+            })
+        }
+
+        function post_save() {
+            //post
+            let id = $('#post-modal-id').val()
+            let url = '/api/posts'
+            if (id > 0) {
+                url = '/api/posts/' + id;
+            }
+            let writer = $('#writer').val();
+            let password = $('#password').val();
+            let title = $('#title').val();
+            let contents = $('#contents').val();
+            if (writer === '') {
+                alert("이름을 입력하세요.")
+                return;
+            }
+            if (password === '') {
+                alert("암호를 입력하세요.")
+                return;
+            }
+            if (title === '') {
+                alert("제목을 입력하세요.")
+                return;
+            }
+            if (contents === '') {
+                alert("내용을 입력하세요.")
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify({
+                    'writer': writer,
+                    'password': password,
+                    'title': title,
+                    'contents': contents
+                }),
+                contentType: 'application/json',
+                success: function (response) {
+                    alert("저장이 완료되었습니다.")
+                    window.location.reload()
+                }
+            })
+        }
+
+        $('#view-contents').text()
+
+        function go_edit_page() {
+            $('#password-modal').removeClass('is-active')
+            let id = $('#post-modal-id').val()
+            let password = $('#post-modal-pwd').val()
+            if (password === '') {
+                alert("비밀번호를 입력하세요.")
+                return;
+            }
+            $.ajax({
+                type: 'PUT',
+                url: '/api/posts/' + id,
+                data: JSON.stringify({
+                    'password': password,
+                }),
+                contentType: 'application/json',
+                success: function (response) {
+                    if (response === '') {
+                        alert('암호가 올바르지 않습니다.')
+                    } else {
+                        $('#writer').val(response['writer'])
+                        $('#title').val(response['title'])
+                        $('#contents').val(response['contents'])
+                        $('#password').val('')
+                        $('div.body-post-form').addClass('active')
+                        $('div.body-post-list').removeClass('active')
+                        $('div.body-post-view').removeClass('active')
+                    }
+                }
+            })
+        }
+
+        function post_cancel() {
+            window.location.reload();
+            $('div.body-post-form').removeClass('active')
+            $('div.body-post-list').addClass('active')
+            $('div.body-post-view').removeClass('active')
+        }
+
+        function post_form() {
+            $('div.body-post-form').addClass('active')
+            $('div.body-post-list').removeClass('active')
+            $('div.body-post-view').removeClass('active')
+            $('#post-modal-id').val(0)
+            $('#writer').attr("disabled", false)
+            $('#writer').val('')
+            $('#title').val('')
+            $('#contents').val('')
+            $('#password').val('')
+        }
+
+        function check_post_pwd(id, action) {
+            $('#post-modal-pwd').val('')
+            $('#password-modal').addClass('is-active')
+            $('#post-modal-id').val(id)
+            if (action === 'edit') {
+                $('#writer').attr("disabled", true)
+                $('#modal-ok-button').attr("onclick", "go_edit_page()");
+            } else {
+                $('#modal-ok-button').attr("onclick", `delete_post(${id})`);
+            }
+        }
+
+        function delete_post(id) {
+            $.ajax({
+                type: 'DELETE',
+                url: '/api/posts/' + id,
+                success: function (response) {
+                    if (response === 'success') {
+                        alert("삭제가 완료되었습니다.")
+                        window.location.reload();
+                    }
+                }
+            })
+        }
+
+        function date2str(dateStr) {
+            let offset = (new Date()).getTimezoneOffset() * 1000 * 60;
+            let utcTime = new Date(dateStr)
+            let day = new Date(utcTime - offset);
+            // let day = new Date(dateStr);
+            let year = `${day.getFullYear()}`;
+            let month = day.getMonth() < 10 ? `0${day.getMonth()}` : `${day.getMonth()}`;
+            let date = day.getDate() < 10 ? `0${day.getDate()}` : `${day.getDate()}`;
+            let hours = day.getHours() < 10 ? `0${day.getHours()}` : `${day.getHours()}`;
+            let minutes = day.getMinutes() < 10 ? `0${day.getMinutes()}` : `${day.getMinutes()}`;
+            let seconds = day.getSeconds() < 10 ? `0${day.getSeconds()}` : `${day.getSeconds()}`;
+
+            return `${year}년 ${month}월 ${date}일 ${hours}:${minutes}:${seconds}`
+        }
+
+        function time2str(dateStr) {
+            let offset = (new Date()).getTimezoneOffset() * 1000 * 60;
+            let utcTime = new Date(dateStr)
+            let day = new Date(utcTime - offset);
+            // let day = new Date(dateStr);
+            let today = new Date(new Date()).getDate()
+
+            if (today === day.getDate()) {
+                let hours = day.getHours() < 10 ? `0${day.getHours()}` : `${day.getHours()}`;
+                let minutes = day.getMinutes() < 10 ? `0${day.getMinutes()}` : `${day.getMinutes()}`;
+
+                return `${hours} : ${minutes}`;
+            }
+            return `${day.getFullYear()}.${day.getMonth() + 1}.${day.getDate()}`
+        }
+    </script>
+
+    <style>
+        .body-post-list {
+            display: none;
+        }
+
+        .body-post-form {
+            display: none;
+        }
+
+        .body-post-view {
+            display: none;
+        }
+
+        div.active {
+            background-color: snow;
+            display: block;
+        }
+
+        .main-contents {
+            margin: auto;
+            width: 70%;
+            padding-top: 3vh;
+            padding-bottom: 3vh;
+            height: 80vh;
+        }
+
+        .table-sector {
+            margin-bottom: 20px;
+        }
+
+        .table > tbody > tr:hover {
+            cursor: pointer;
+        }
+
+        .button {
+            margin: 5px auto 15px auto;
+        }
+
+        .table-title > th:nth-child(1) {
+            width: 10%;
+        }
+
+        .table-title > th:nth-child(2) {
+            width: 15%;
+        }
+
+        .table-title > th:nth-child(3) {
+            width: 40%;
+        }
+
+        .table-title > th:nth-child(4) {
+            width: 15%;
+        }
+
+        .table-title > th:nth-child(5) {
+            width: 10%;
+        }
+
+        .table-title > th:nth-child(6) {
+            width: 10%;
+        }
+
+        .post-small {
+            width: 30%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .post {
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .save-button-area {
+            width: content-box;
+            margin-right: 5px;
+        }
+
+        .post-box {
+            height: 95%;
+        }
+
+        .post-title {
+            border-bottom: black 1px solid;
+            border-top: black 4px solid;
+        }
+
+        .post-writer, .post-date {
+            border-bottom: black 1px solid;
+        }
+
+        .post-contents {
+            border-top: black 3px solid;
+            border-bottom: black 4px solid;
+            height: 70%;
+        }
+
+        .edit-button-area {
+            margin-bottom: 20px;
+        }
+
+        .modal-content {
+            width: fit-content;
+        }
+
+        .modal-container {
+            background-color: skyblue;
+            padding: 1vh;
+            width: fit-content;
+        }
+
+        .modal-input {
+            width: 75%;
+            margin: auto;
+        }
+
+        .modal-button {
+            margin: auto;
+        }
+    </style>
+
+</head>
+<body>
+<section class="hero is-primary">
+    <div class="hero-body">
+        <p class="title">
+            나의 블로그
+        </p>
+        <p class="subtitle">
+            익명 게시판
+        </p>
+    </div>
+</section>
+<div class="body-post-list active">
+    <section class="main-contents">
+        <button class="button is-info" onclick="post_form()">글 작성하기</button>
+        <div class="table-sector">
+            <table class="table is-hoverable is-fullwidth is-bordered ">
+                <thead>
+                <tr class="table-title">
+                    <th>
+                        <div title="id">No.</div>
+                    </th>
+                    <th>
+                        <div title="writer">작성자</div>
+                    </th>
+                    <th>
+                        <div title="title">제목</div>
+                    </th>
+                    <th>
+                        <div title="createdAt">게시일</div>
+                    </th>
+                    <th>
+                        <div title="viewer">조회수</div>
+                    </th>
+                    <th>
+                        <div title="viewer">댓글수</div>
+                    </th>
+                </tr>
+                </thead>
+                <tbody id="post-table">
+                </tbody>
+            </table>
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+            <!--    <a class="pagination-previous">Previous</a>-->
+            <!--    <a class="pagination-next">Next page</a>-->
+            <ul class="pagination-list" id="pagination-ul">
+                <li><a class="pagination-link" aria-label="Goto page 1">1</a></li>
+                <li><span class="pagination-ellipsis">&hellip;</span></li>
+                <li><a class="pagination-link" aria-label="Goto page 45">45</a></li>
+                <li><a class="pagination-link is-current" aria-label="Page 46" aria-current="page">46</a></li>
+                <li><a class="pagination-link" aria-label="Goto page 47">47</a></li>
+                <li><span class="pagination-ellipsis">&hellip;</span></li>
+                <li><a class="pagination-link" aria-label="Goto page 86">86</a></li>
+            </ul>
+        </nav>
+    </section>
+</div>
+<div class="body-post-form">
+    <section class="main-contents">
+        <div class="save-button-area">
+            <button class="button is-success" onclick="post_save()">저장</button>
+            <button class="button" onclick="post_cancel()">취소</button>
+        </div>
+        <div class="control post-small">
+            <span>작성자</span><input class="input" type="text" placeholder="작성자" id="writer">
+        </div>
+        <div class="control post-small">
+            비밀번호<input class="input" type="password" placeholder="비밀번호" id="password">
+        </div>
+        <div class="control post">
+            제목<input class="input" type="text" placeholder="제목" id="title">
+        </div>
+        본문<textarea class="textarea post" placeholder="내용" rows="10" id="contents"></textarea>
+
+    </section>
+</div>
+
+<div class="body-post-view">
+    <div class="content main-contents" id="post-box">
+        <div class="post-box">
+            <div class="post-title">
+                제목 : <span>title</span>
+            </div>
+            <div class="post-writer">
+                글쓴이 : <span>user</span>
+            </div>
+            <div class="post-date">
+                작성 날짜 : <span>2021.09.21</span>
+            </div>
+            <div class="post-view-count">
+                조회수 : <span>1</span>
+            </div>
+            <div class="post-contents">
+
+            </div>
+        </div>
+        <div class="edit-button-area">
+            <button class="button is-link" onclick="check_post_pwd(1)">수정</button>
+            <button class="button is-link" onclick="check_post_pwd(1)">삭제</button>
+            <button class="button" onclick="post_cancel()">목록</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="password-modal">
+    <div class="modal-background" onclick="$('#password-modal').removeClass('is-active')"></div>
+    <div class="modal-content">
+        <div class="modal-container">
+            <div id="post-modal-id" style="display: none"></div>
+            <div id="post-modal-action" style="display: none"></div>
+            <div>게시글 비밀번호</div>
+            <div>
+                <input id="post-modal-pwd" class="input modal-input" type="password" placeholder="password">
+                <button id="modal-ok-button" class="button modal-button">확인</button>
+            </div>
+        </div>
+    </div>
+    <button class="modal-close is-large" aria-label="close"
+            onclick="$('#password-modal').removeClass('is-active')"></button>
+</div>
+</body>
+</html>
