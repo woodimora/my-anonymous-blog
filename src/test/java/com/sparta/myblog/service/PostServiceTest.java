@@ -31,8 +31,8 @@ class PostServiceTest {
         PostRequestDto requestDto2 = PostRequestDto.builder()
                 .writer("member1")
                 .password("1234")
-                .title("제목이다")
-                .contents("내용이다")
+                .title("test Update")
+                .contents("test Update")
                 .build();
 
         PostResponseDto result = postService.update(post.getId(), requestDto2);
@@ -53,8 +53,8 @@ class PostServiceTest {
         PostRequestDto requestDto1 = PostRequestDto.builder()
                 .writer("member1")
                 .password("1234")
-                .title("제목")
-                .contents("내용")
+                .title("test view count")
+                .contents("test view count")
                 .build();
         Post post = repository.save(new Post(requestDto1));
         //when
