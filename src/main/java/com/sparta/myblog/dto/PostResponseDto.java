@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+//응답을 위한 Dto
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostResponseDto {

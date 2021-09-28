@@ -1,0 +1,119 @@
+.body-post-list {
+    display: none;
+}
+
+.body-post-form {
+    display: none;
+}
+
+.body-post-view {
+    display: none;
+}
+
+div.active {
+    background-color: snow;
+    display: block;
+}
+
+.main-contents {
+    margin: auto;
+    width: 70%;
+    padding-top: 3vh;
+    padding-bottom: 3vh;
+    height: 80vh;
+}
+
+.table-sector {
+    margin-bottom: 20px;
+}
+
+.table > tbody > tr:hover {
+    cursor: pointer;
+}
+
+.button {
+    margin: 5px auto 15px auto;
+}
+
+.table-title > th:nth-child(1) {
+    width: 10%;
+}
+
+.table-title > th:nth-child(2) {
+    width: 15%;
+}
+
+.table-title > th:nth-child(3) {
+    width: 40%;
+}
+
+.table-title > th:nth-child(4) {
+    width: 15%;
+}
+
+.table-title > th:nth-child(5) {
+    width: 10%;
+}
+
+.table-title > th:nth-child(6) {
+    width: 10%;
+}
+
+.post-small {
+    width: 30%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.post {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.save-button-area {
+    width: content-box;
+    margin-right: 5px;
+}
+
+.post-box {
+    height: 95%;
+}
+
+.post-title {
+    border-bottom: black 1px solid;
+    border-top: black 4px solid;
+}
+
+.post-writer, .post-date {
+    border-bottom: black 1px solid;
+}
+
+.post-contents {
+    border-top: black 3px solid;
+    border-bottom: black 4px solid;
+    height: 70%;
+}
+
+.edit-button-area {
+    margin-bottom: 20px;
+}
+
+.modal-content {
+    width: fit-content;
+}
+
+.modal-container {
+    background-color: skyblue;
+    padding: 1vh;
+    width: fit-content;
+}
+
+.modal-input {
+    width: 75%;
+    margin: auto;
+}
+
+.modal-button {
+    margin: auto;
+}
