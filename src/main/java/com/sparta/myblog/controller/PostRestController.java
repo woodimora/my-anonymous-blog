@@ -37,12 +37,14 @@ public class PostRestController {
         //게시글 조회수를 위해 현재 쿠키에 담겨져 있는 게시글 id를 확인.
         String cookieName = "postId" + id;
         Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if(cookie.getName().equals(cookieName)){
-                //게시글 정보 응답
-                return new PostResponseDto(postRepository.findById(id).orElseThrow(
-                        () -> new IllegalStateException("아이디가 존재하지 않습니다.")
-                ));
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(cookieName)) {
+                    //게시글 정보 응답
+                    return new PostResponseDto(postRepository.findById(id).orElseThrow(
+                            () -> new IllegalStateException("아이디가 존재하지 않습니다.")
+                    ));
+                }
             }
         }
 
@@ -89,8 +91,7 @@ public class PostRestController {
         if (requestDto.getPassword().equals(post.getPassword())) {
             postRepository.delete(post);
             return "success";
-        }
-        else {
+        } else {
             return "fail";
         }
     }
