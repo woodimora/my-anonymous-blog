@@ -71,11 +71,11 @@ public class PostRestController {
 
     //게시글 수정 인증 - 비밀번호 확인
     @GetMapping("/api/posts/auth/{id}")
-    public PostResponseDto getEditAuth(@PathVariable Long id, @RequestBody PostRequestDto requestDto) {
+    public PostResponseDto getEditAuth(@PathVariable Long id, @RequestParam String password) {
         Post post = postRepository.findById(id).orElseThrow(
                 () -> new IllegalStateException("아이디가 존재하지 않습니다."));
         //비밀번호 확인
-        if (requestDto.getPassword().equals(post.getPassword())) {
+        if (password.equals(post.getPassword())) {
             return new PostResponseDto(post);
         }
         return null;

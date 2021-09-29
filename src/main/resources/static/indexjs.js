@@ -177,18 +177,17 @@ function go_edit_page() {
     let id = $('#post-modal-id').val()
     let password = $('#post-modal-pwd').val()
     if (password === '') {
-        alert("비밀번호를 입력하세요.")
+        alert("암호를 입력하세요.")
         return;
     }
-    //게시글 수정 요청
+    let data = `password=${password}`;
+    //게시글 수정 인증 요청
     $.ajax({
         type: 'GET',
         url: '/api/posts/auth/' + id,
-        data: JSON.stringify({
-            'password': password,
-        }),
-        contentType: 'application/json',
+        data: data,
         success: function (response) {
+            console.log(response)
             if (response === '') {
                 alert('암호가 올바르지 않습니다.')
             } else {
@@ -243,7 +242,7 @@ function check_post_pwd(id, action) {
 function delete_post(id) {
     let password = $('#post-modal-pwd').val()
     if (password === '') {
-        alert("비밀번호를 입력하세요.")
+        alert("암호를 입력하세요.")
         return;
     }
     $.ajax({
@@ -252,6 +251,7 @@ function delete_post(id) {
         data: JSON.stringify({
             'password': password,
         }),
+        contentType:"application/json",
         success: function (response) {
             if (response === 'success') {
                 alert("삭제가 완료되었습니다.")
